@@ -1,4 +1,4 @@
-import { DEFAULT_CONTEXT, DID, DIDWithKeys, JWTService, VERIFIABLE_PRESENTATION } from "../common";
+import { DEFAULT_CONTEXT, DID, DIDWithKeys, JWTService, VERIFIABLE_PRESENTATION, discloseClaims } from "../common";
 import {CreatePresentationOptions, PresentationPayload, VerifiableCredential, VerifiablePresentation } from 'did-jwt-vc'
 import { JWTPayload } from "did-jwt";
 
@@ -58,8 +58,34 @@ export async function createAndSignPresentationJWT(
 ): Promise<string> {
     const payload = createPresentation(holder.did, verifiableCredentials)
     const jwtService = new JWTService()
-    return await jwtService.signVP(holder, payload, options)
+    let vp = await jwtService.signVP(holder, payload, options)
+    return vp
 
+}
+
+
+
+export async function createAndSignPresentationSDJWT(
+    holder: DIDWithKeys,
+    //only supports JWT based VCs
+    credential: string,
+    claim: string[],
+    options?: CreatePresentationOptions
+){
+    const jwtService = new JWTService()
+    let updatedJwt = await discloseClaims(credential, claim)
+    // console.log('updatedJwt', updatedJwt)
+    let jwt: string = updatedJwt.split("~")[0]
+    let sd: string = updatedJwt.substring(updatedJwt.indexOf("~")+1)
+
+    const payload = createPresentation(holder.did, [jwt])
+    
+    let vp = await jwtService.signVP(holder, payload, options)
+    return vp +"~"+ sd
+}
+
+function removeTrailingTilde(strs: string[]) {
+    return strs.map((str: string) => str.endsWith('~') ? str.slice(0, -1) : str)
 }
 
 /**

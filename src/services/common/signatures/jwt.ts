@@ -1,10 +1,12 @@
 import { DIDWithKeys } from "../did/did";
 import { SignatureService } from "./signatures";
-import { CredentialPayload, PresentationPayload, createVerifiableCredentialJwt, createVerifiablePresentationJwt, Issuer, CreatePresentationOptions, CreateCredentialOptions } from 'did-jwt-vc'
-import { ES256KSigner, hexToBytes, EdDSASigner } from 'did-jwt'
+import { CredentialPayload, PresentationPayload, createVerifiableCredentialJwt, createVerifiablePresentationJwt, Issuer, CreatePresentationOptions, CreateCredentialOptions, JwtCredentialPayload } from 'did-jwt-vc'
+import { ES256KSigner, hexToBytes, EdDSASigner, createJWS, createJWT } from 'did-jwt'
 import { KEY_ALG } from "../../../utils";
 import { isString } from 'lodash'
 import {decode} from 'jsonwebtoken';
+import { createDisclosures, sdJwtCredentialPayload } from "../sdjwt/selective-disclosure";
+import * as jose from 'jose'
 
 export class JWTService implements SignatureService {
     name = 'JWT'
@@ -51,6 +53,37 @@ export class JWTService implements SignatureService {
     async signVP(keys: DIDWithKeys, token: PresentationPayload, options?: CreatePresentationOptions): Promise<JWT> {
         const holder = this.convertKeys(keys)
         return await createVerifiablePresentationJwt(token, holder, options)
+    }
+
+    async createSelectiveDisclosures(keys: DIDWithKeys, jwt: JWT, claimValues: any){
+        let disclosures: string[] = []
+        let issuer: Issuer = this.convertKeys(keys)
+        let jwtPayload: JwtCredentialPayload
+        try{
+            jwtPayload = decode(jwt) as JwtCredentialPayload
+        }catch{
+            throw("Error decoding JWT")
+        }
+        if( issuer.alg == undefined) throw ("No algorithm in Issuer defined")
+        if(claimValues){
+            const { target, _disclosures } = createDisclosures(issuer.alg, claimValues, jwtPayload)
+            disclosures = _disclosures
+            Object.defineProperty(target.vc, "_sd_alg", {value: issuer.alg, enumerable: true});
+        }
+        return { jwtPayload, disclosures }
+    }
+
+    async signSelectiveDisclosure(keys: DIDWithKeys, jwt: jose.JWTPayload, disclosures: string[]){
+        // const jwtString = JSON.stringify(jwt);
+        // const payload = Buffer.from(jwtString);
+        let issuer: Issuer = this.convertKeys(keys)
+        let jws = await createJWS(jwt, issuer.signer)
+        
+        if (disclosures) {
+            jws = jws.concat('~' + disclosures.join('~'));
+        }
+        
+        return jws;
     }
 
     /**

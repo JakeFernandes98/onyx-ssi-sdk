@@ -131,6 +131,39 @@ export async function createAndSignCredentialJWT(
 }
 
 /**
+ * Creates a Verifiable Credential SD-JWT from {@link DIDWithKeys} and
+ * required properties of the Verifiable Credential
+ *
+ * The `DIDWithKeys` is used to sign the JWT that encodes the Verifiable Credential.
+ * 
+ * @param issuer 
+ * @param subjectDID 
+ * @param credentialSubject 
+ * @param credentialType 
+ * @param claimValues
+ * @param additionalProperties 
+ * @param options 
+ * @returns 
+ */
+export async function createAndSignCredentialSDJWT(
+    issuer: DIDWithKeys,
+    subjectDID: DID,
+    credentialSubject: CredentialSubject,
+    credentialType: string[],
+    claimValues: CredentialSubject,
+    additionalProperties?: Partial<CredentialPayload>,
+    options?: CreateCredentialOptions,
+): Promise<string> {
+    const payload = await createCredential(
+        issuer.did, subjectDID, credentialSubject, credentialType, additionalProperties)
+
+    const jwtService = new JWTService()
+    let jwt = await jwtService.signVC(issuer, payload, options)
+    let { jwtPayload, disclosures } = await jwtService.createSelectiveDisclosures(issuer, jwt, claimValues)
+    return await jwtService.signSelectiveDisclosure(issuer, jwtPayload, disclosures)
+}
+
+/**
  * This method deactivates an Onyx Verifiable Credential
  * 
  * Onyx revocable credentials require the VC to have a DID registered on the DIDRegistry.

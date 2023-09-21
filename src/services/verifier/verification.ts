@@ -1,8 +1,9 @@
 import { Resolvable } from 'did-resolver'
-import { VerifiableCredential, VerifiablePresentation, verifyCredential, VerifyCredentialOptions, verifyPresentation, VerifyPresentationOptions } from "did-jwt-vc"
-import { DID, SchemaManager } from '../common';
+import { VerifiableCredential, VerifiablePresentation, VerifiedPresentation, verifyCredential, VerifyCredentialOptions, verifyPresentation, VerifyPresentationOptions } from "did-jwt-vc"
+import { DID, DisclosureArray, SchemaManager, SD_JWT } from '../common';
 import { decodeJWT } from 'did-jwt';
 import { DIDMethodFailureError } from '../../errors';
+import { hashDisclosure, parseDisclosure } from '../common';
 /**
  * Provides verification of a Verifiable Credential JWT
  * 
@@ -57,12 +58,58 @@ export async function verifyPresentationJWT(
     didResolver: Resolvable,
     options?: VerifyPresentationOptions
     // eslint-disable-next-line  @typescript-eslint/no-explicit-any
-) : Promise<boolean> {
+): Promise<VerifiedPresentation>{
     if(typeof vp === 'string') {
         const verified = await verifyPresentation(vp, didResolver, options)
-        return verified.verified
+        return verified
     }
     throw TypeError('Ony JWT supported for Verifiable Presentations')
+
+}
+
+
+export async function verifyDisclosures(disclosures: string[], sd_alg:string, sd:string[]) {
+    let disclosedClaims = {};
+    disclosures.forEach(disclosure => {
+        const disclosureDigest = hashDisclosure(sd_alg, disclosure);
+        if (!sd.includes(disclosureDigest)) {
+            throw new Error(`Disclosure ${disclosure} is not contained in SD-JWT`);
+        }
+        const disclosureArray = parseDisclosure(disclosure);
+        console.log(disclosureArray)
+        Object.defineProperty(disclosedClaims, disclosureArray[DisclosureArray.NAME], {value: disclosureArray[DisclosureArray.VALUE], enumerable: true});
+    })
+    return disclosedClaims;
+}
+
+
+export async function verifyPresentationSDJWT(sdJwt: string, didResolver: Resolvable, options?: VerifyPresentationOptions){
+    console.log(sdJwt)
+    const parts = sdJwt.split('~');
+    const JWS = parts[0];
+
+    let verified
+    let payload
+    try {
+        verified = await verifyPresentation(JWS, didResolver, options)
+        // console.log(verified.payload.vp.verifiableCredential)
+        payload = decodeJWT(verified.payload.vp.verifiableCredential[0]).payload
+    } catch (err) {
+        throw new Error(`Error validating signature: ${err}`);
+    }
+
+    let disclosedClaims = {};
+    if (parts.length > 1 && parts[1] !== "") {
+        const disclosures = parts.slice(1);
+        const sd = payload.vc.credentialSubject._sd;
+        const sd_alg = payload.vc._sd_alg;
+        disclosedClaims = await verifyDisclosures(disclosures, sd_alg, sd);
+    }
+    return {
+        vp: verified,
+        disclosed: disclosedClaims
+    };
+
 
 }
 
