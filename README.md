@@ -1,5 +1,24 @@
 # Onyx SSI SDK
 
+## Running the fork
+
+1. Clone this repo
+2. run npm install
+3. npm run build
+4. npm link
+
+Now in the terminal navigate to the codebase you want to use the repo and run
+```npm link @jpmorganchase/onyx-ssi-sdk```
+
+This should add a line like this to your package.json
+```
+"dependencies": {
+    "@jpmorganchase/onyx-ssi-sdk": "file:../onyx-ssi-sdk",
+}
+```
+
+If you need to make code changes to the fork, you will need to run npm run build again once you are finished (but you don't need to do the redo the link process)
+
 Create SSI Ecosystems following W3C Standards for [Verifiable Credentials](https://www.w3.org/TR/vc-data-model/) and [DIDs](https://www.w3.org/TR/did-core/)
 
 * Create and verify Verifiable Credentials and Verifiable Presentations
