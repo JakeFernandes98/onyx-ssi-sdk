@@ -102,10 +102,10 @@ export const parseDisclosure = (disclosure: string): string[] => {
 export const discloseClaims = async (sdJwt: string, claims: string[]): Promise<string> => {
     // split SD-JWS into JWS and Disclosures
     const parts = sdJwt.split('~');
-    if (parts.length <= 1) {
-        throw new Error("No Disclosures found in SD-JWT");
-    }
     const JWS = parts[0];
+    if (parts.length <= 1) {
+        return JWS
+    }
     let disclosures = parts.slice(1);
     disclosures = disclosures.filter(disclosure => claims.includes(parseDisclosure(disclosure)[DisclosureArray.NAME]));
     // if(disclosures.length == 0) return JWS

@@ -88,4 +88,3 @@ export interface KeyPair {
     publicKey: string | Uint8Array,
     privateKey: string | Uint8Array
 }
-

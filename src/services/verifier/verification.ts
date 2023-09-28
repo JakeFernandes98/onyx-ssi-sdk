@@ -84,7 +84,6 @@ export async function verifyDisclosures(disclosures: string[], sd_alg:string, sd
 
 
 export async function verifyPresentationSDJWT(sdJwt: string, didResolver: Resolvable, options?: VerifyPresentationOptions){
-    console.log(sdJwt)
     const parts = sdJwt.split('~');
     const JWS = parts[0];
 
@@ -92,19 +91,41 @@ export async function verifyPresentationSDJWT(sdJwt: string, didResolver: Resolv
     let payload
     try {
         verified = await verifyPresentation(JWS, didResolver, options)
-        // console.log(verified.payload.vp.verifiableCredential)
-        payload = decodeJWT(verified.payload.vp.verifiableCredential[0]).payload
+        // console.log(verified.payload.vp.verifiableCredential
     } catch (err) {
         throw new Error(`Error validating signature: ${err}`);
     }
 
-    let disclosedClaims = {};
-    if (parts.length > 1 && parts[1] !== "") {
-        const disclosures = parts.slice(1);
-        const sd = payload.vc.credentialSubject._sd;
-        const sd_alg = payload.vc._sd_alg;
-        disclosedClaims = await verifyDisclosures(disclosures, sd_alg, sd);
+    let disclosedClaims:{}[] = [];
+
+    let splitJwt = sdJwt.substring(sdJwt.indexOf("~"))
+    const groups = splitJwt.split('&');
+
+    console.log('groups --', groups)
+
+    // Map over each group, split by '~' and filter out any empty strings. Then, parse each number.
+    const allDisclosures = groups.map(group => group.split('~').filter(str => str));
+
+    console.log('allDisclosures --', allDisclosures)
+
+
+    for(let i=0; i<verified.payload.vp.verifiableCredential.length; i++){
+        let vc = verified.payload.vp.verifiableCredential[i]
+        console.log('vc --', vc)
+        payload = decodeJWT(vc).payload
+        let disclosures = allDisclosures[i]
+        if (disclosures.length > 0) {
+            const sd = payload.vc.credentialSubject._sd;
+            const sd_alg = payload.vc._sd_alg;
+            disclosedClaims.push(await verifyDisclosures(disclosures, sd_alg, sd))
+        }else{
+            disclosedClaims.push({})
+        }
+        console.log(disclosedClaims)
     }
+
+
+    
     return {
         vp: verified,
         disclosed: disclosedClaims

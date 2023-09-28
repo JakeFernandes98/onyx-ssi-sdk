@@ -68,20 +68,32 @@ export async function createAndSignPresentationJWT(
 export async function createAndSignPresentationSDJWT(
     holder: DIDWithKeys,
     //only supports JWT based VCs
-    credential: string,
-    claim: string[],
+    verifiableCredentials: string[],
+    claims: string[][],
     options?: CreatePresentationOptions
 ){
     const jwtService = new JWTService()
-    let updatedJwt = await discloseClaims(credential, claim)
-    // console.log('updatedJwt', updatedJwt)
-    let jwt: string = updatedJwt.split("~")[0]
-    let sd: string = updatedJwt.substring(updatedJwt.indexOf("~")+1)
 
-    const payload = createPresentation(holder.did, [jwt])
+    let jwts: string[] = []
+    let sds = ""
+
+    for(let i=0; i<verifiableCredentials.length; i++){
+        console.log(verifiableCredentials[i], claims[i])
+        let updatedJwt = await discloseClaims(verifiableCredentials[i], claims[i])
+        console.log('updatedJwt ------------ ', updatedJwt)
+        let jwt: string = updatedJwt.split("~")[0]
+        let sd: string = ""
+        if(updatedJwt.indexOf("~") !== -1) sd = updatedJwt.substring(updatedJwt.indexOf("~")+1)
+        console.log("sds ---------", sd)
+        jwts.push(jwt)
+        sds += sd+"&"
+    }
+    
+    console.log("jwts -------------- ", jwts)
+    const payload = createPresentation(holder.did, jwts)
     
     let vp = await jwtService.signVP(holder, payload, options)
-    return vp +"~"+ sd
+    return vp +"~"+ sds
 }
 
 function removeTrailingTilde(strs: string[]) {
