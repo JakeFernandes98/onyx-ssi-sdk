@@ -4,6 +4,7 @@ import { DID, DisclosureArray, SchemaManager, SD_JWT } from '../common';
 import { decodeJWT } from 'did-jwt';
 import { DIDMethodFailureError } from '../../errors';
 import { hashDisclosure, parseDisclosure } from '../common';
+import { getRevocationStatus } from '../common/revocation';
 /**
  * Provides verification of a Verifiable Credential JWT
  * 
@@ -69,7 +70,7 @@ export async function verifyPresentationJWT(
 
 
 export async function verifyDisclosures(disclosures: string[], sd_alg:string, sd:string[]) {
-    let disclosedClaims = {};
+    const disclosedClaims = {};
     disclosures.forEach(disclosure => {
         const disclosureDigest = hashDisclosure(sd_alg, disclosure);
         if (!sd.includes(disclosureDigest)) {
@@ -228,8 +229,29 @@ export async function verifyRevocationStatus(vc: VerifiableCredential, didResolv
         const credential = decodeJWT(vc).payload
         vcId = credential.jti ? credential.jti : credential.vc.id
     } else {
-        vcId = vc.id
+        vcId = vc.id;
+
+        // Verify revocation status using StatusList21 spec
+        if (
+            vc.credentialStatus !== undefined &&
+               vc.credentialStatus?.type == "StatusList2021Entry"
+        ) {
+            const listUrl = vc.credentialStatus?.id.split("#")[0];
+            const credId: number = parseInt(
+                vc.credentialStatus?.id.split("#").slice(-1)[0]
+            );
+
+            const revocationStatus = await getRevocationStatus(
+                credId,
+                listUrl
+            );
+
+            if (!revocationStatus) {
+                return false;
+            }
+        }
     }
+
     if(vcId) {
         return await verifyDID(vcId, didResolver)
     }

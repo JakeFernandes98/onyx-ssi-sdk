@@ -43,7 +43,8 @@
     "@types/jest": "^29.5.1",
     "@types/jsonwebtoken": "^9.0.2",
     "@types/mocha": "^10.0.1",
-    "@types/node": "^18.16.19",
+    "@types/node": "^18.18.0",
+    "@types/pako": "^2.0.1",
     "@typescript-eslint/eslint-plugin": "^5.57.1",
     "@typescript-eslint/parser": "^5.57.1",
     "eslint": "^8.37.0",
@@ -80,6 +81,7 @@
     "key-did-resolver": "1.4.0",
     "lodash": "^4.17.21",
     "loglevel": "^1.8.1",
+    "pako": "^2.1.0",
     "solidity-coverage": "^0.8.2",
     "ts-node": "^10.9.1",
     "typechain": "^8.1.1"
