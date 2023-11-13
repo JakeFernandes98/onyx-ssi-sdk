@@ -78,18 +78,18 @@ export async function createAndSignPresentationSDJWT(
     let sds = ""
 
     for(let i=0; i<verifiableCredentials.length; i++){
-        console.log(verifiableCredentials[i], claims[i])
+        // console.log(verifiableCredentials[i], claims[i])
         let updatedJwt = await discloseClaims(verifiableCredentials[i], claims[i])
-        console.log('updatedJwt ------------ ', updatedJwt)
+        // console.log('updatedJwt ------------ ', updatedJwt)
         let jwt: string = updatedJwt.split("~")[0]
         let sd: string = ""
         if(updatedJwt.indexOf("~") !== -1) sd = updatedJwt.substring(updatedJwt.indexOf("~")+1)
-        console.log("sds ---------", sd)
+        // console.log("sds ---------", sd)
         jwts.push(jwt)
         sds += sd+"&"
     }
     
-    console.log("jwts -------------- ", jwts)
+    // console.log("jwts -------------- ", jwts)
     const payload = createPresentation(holder.did, jwts)
     
     let vp = await jwtService.signVP(holder, payload, options)

@@ -38,10 +38,10 @@ describe('selective disclosure utilities', () => {
 
     it('returns the right crypto algorithm for both did:ethr and did:key', async () => {
         const didKeyWithKeys = await keyDIDMethod.create()
-        let convertedEthr = jwtService.convertKeys(didEthrWithKeys)
-        let converedKey = jwtService.convertKeys(didKeyWithKeys)
-        let ethrAlg = ianaToCryptoAlg(convertedEthr.alg!)
-        let keyAlg = ianaToCryptoAlg(converedKey.alg!)
+        const convertedEthr = jwtService.convertKeys(didEthrWithKeys)
+        const converedKey = jwtService.convertKeys(didKeyWithKeys)
+        const ethrAlg = ianaToCryptoAlg(convertedEthr.alg!)
+        const keyAlg = ianaToCryptoAlg(converedKey.alg!)
         expect(ethrAlg).toEqual('sha256')
         expect(keyAlg).toEqual('sha512')
 
@@ -100,7 +100,7 @@ describe('selective disclosure utilities', () => {
     let disclosuresZero
     let presentationZero
     it('holder correctly creates a Verifiable presentation with no claims', async () => {
-        presentationZero = await createAndSignPresentationSDJWT(didHolder, credential, [])
+        presentationZero = await createAndSignPresentationSDJWT(didHolder, [credential], [[]])
         jwt = presentationZero.split("~")[0]
         payloadZero = jwtService.decodeJWT(jwt)!.payload as JwtPresentationPayload
         expect(payloadZero.vp.verifiableCredential).toBeDefined()
@@ -116,7 +116,7 @@ describe('selective disclosure utilities', () => {
     })
 
     it("and be verified", async () => {
-        let res = await verifyPresentationSDJWT(presentationZero, combinedResolver)
+        const res = await verifyPresentationSDJWT(presentationZero, combinedResolver)
         expect(res.vp.verified).toBeTruthy()
         
     })
@@ -125,7 +125,7 @@ describe('selective disclosure utilities', () => {
     let disclosuresOne
     let presentationOne
     it('holder correctly creates a Verifiable presentation with one claim', async () => {
-        presentationOne = await createAndSignPresentationSDJWT(didHolder, credential, ['fname'])
+        presentationOne = await createAndSignPresentationSDJWT(didHolder, [credential], [['fname']])
         jwt = presentationOne.split("~")[0]
         payloadOne = jwtService.decodeJWT(jwt)!.payload as JwtPresentationPayload
         expect(payloadOne.vp.verifiableCredential).toBeDefined()
@@ -140,9 +140,9 @@ describe('selective disclosure utilities', () => {
     })
 
     it("and be verified", async () => {
-        let res = await verifyPresentationSDJWT(presentationOne, combinedResolver)
+        const res = await verifyPresentationSDJWT(presentationOne, combinedResolver)
         expect(res.vp.verified).toBeTruthy()
-        expect(res.disclosed).toHaveProperty('fname')
+        expect(res.disclosed[0]).toHaveProperty('fname')
     })
 
 
@@ -150,7 +150,7 @@ describe('selective disclosure utilities', () => {
     let disclosuresTwo
     let presentationTwo
     it('holder correctly creates a Verifiable presentation with both claims', async () => {
-        presentationTwo = await createAndSignPresentationSDJWT(didHolder, credential, ['fname','sname'])
+        presentationTwo = await createAndSignPresentationSDJWT(didHolder, [credential], [['fname','sname']])
         jwt = presentationTwo.split("~")[0]
         payloadTwo = jwtService.decodeJWT(jwt)!.payload as JwtPresentationPayload
         expect(payloadTwo.vp.verifiableCredential).toBeDefined()
@@ -165,10 +165,10 @@ describe('selective disclosure utilities', () => {
     })
 
     it("and be verified", async () => {
-        let res = await verifyPresentationSDJWT(presentationTwo, combinedResolver)
+        const res = await verifyPresentationSDJWT(presentationTwo, combinedResolver)
         expect(res.vp.verified).toBeTruthy()
-        expect(res.disclosed).toHaveProperty('fname')
-        expect(res.disclosed).toHaveProperty('sname')
+        expect(res.disclosed[0]).toHaveProperty('fname')
+        expect(res.disclosed[0]).toHaveProperty('sname')
     })
 
     // it("verifier can verify and read presentation with no claims", async () => {

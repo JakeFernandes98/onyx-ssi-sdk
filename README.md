@@ -1,7 +1,31 @@
-# Onyx SSI SDK
+# Onyx SSI SDK Fork
+
+## Motivation
+
+We decided to focus on implementing selective disclosure and revocation as part of the Onyx SDK hackathon. We chose these two features as we believe they gave us tools to implement interesting and powerful use cases for our POC.
+
+Selective Disclosure was initially implemented according to the SD-JWT spec, which can be found at this hash commit ``
+
+However, slight modifications were made to the standard to allow the presentation and verification of multiple SD-JWTs as part of a single W3C Verifiable Presentation which is code found in the lasest commit of this fork.
+
+Forming a SD-JWT presentation usually takes the form of:
+
+VPJWT~disclosure1~disclosure2...
+
+Which limits us to only presenting a single credential at a time. And so we have changed the way an SD-JWT presentation is formatted to look like the following:
+
+VPJWT~vc1_disclousre1~vc1_disclosure2&vc2_disclosure1&&vc4_disclousure1
+
+Not only does this let us include multiple disclosures for multiple SD-enabled credentials, but also lets us mix and match normal VC JWTs with SD-JWTs. The drawbacks being that this is not part of any standard and it assumes the order of the credentials within the VPJWT is being maintained and respected through out the end to end flow.
+
+For revocation we have implemented StatusList2021 to support credential revocation according to that standard, which allows us to issue and revoke credentials using did:key now as well as did:ethr and removes the need to register the DID to the DIDRegistry for ethr.
+
+## Implementation
+
+Unfortunatley, I began the implementation before seeing the ReadMe on the main branch for the SD-JWT challenge, This means the structure of the implementation differs. Rather than having all the code centralised to a single file (sdjwt.ts), it is spread around utilising the exisiting structure of jwtService, issuer, holder and verifier. At the time this felt like the more appropriate approach. Unit tests have been written to the test the functionality in the respective test files.
 
 ## Running the fork
-
+    
 1. Clone this repo
 2. run npm install
 3. npm run build
@@ -18,6 +42,11 @@ This should add a line like this to your package.json
 ```
 
 If you need to make code changes to the fork, you will need to run npm run build again once you are finished (but you don't need to do the redo the link process)
+
+
+
+# Original ReadMe
+
 
 Create SSI Ecosystems following W3C Standards for [Verifiable Credentials](https://www.w3.org/TR/vc-data-model/) and [DIDs](https://www.w3.org/TR/did-core/)
 

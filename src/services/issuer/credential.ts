@@ -158,8 +158,8 @@ export async function createAndSignCredentialSDJWT(
         issuer.did, subjectDID, credentialSubject, credentialType, additionalProperties)
 
     const jwtService = new JWTService()
-    let jwt = await jwtService.signVC(issuer, payload, options)
-    let { jwtPayload, disclosures } = await jwtService.createSelectiveDisclosures(issuer, jwt, claimValues)
+    const jwt = await jwtService.signVC(issuer, payload, options)
+    const { jwtPayload, disclosures } = await jwtService.createSelectiveDisclosures(issuer, jwt, claimValues)
     return await jwtService.signSelectiveDisclosure(issuer, jwtPayload, disclosures)
 }
 

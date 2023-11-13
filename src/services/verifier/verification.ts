@@ -76,7 +76,7 @@ export async function verifyDisclosures(disclosures: string[], sd_alg:string, sd
             throw new Error(`Disclosure ${disclosure} is not contained in SD-JWT`);
         }
         const disclosureArray = parseDisclosure(disclosure);
-        console.log(disclosureArray)
+        // console.log(disclosureArray)
         Object.defineProperty(disclosedClaims, disclosureArray[DisclosureArray.NAME], {value: disclosureArray[DisclosureArray.VALUE], enumerable: true});
     })
     return disclosedClaims;
@@ -101,17 +101,17 @@ export async function verifyPresentationSDJWT(sdJwt: string, didResolver: Resolv
     let splitJwt = sdJwt.substring(sdJwt.indexOf("~"))
     const groups = splitJwt.split('&');
 
-    console.log('groups --', groups)
+    // console.log('groups --', groups)
 
     // Map over each group, split by '~' and filter out any empty strings. Then, parse each number.
     const allDisclosures = groups.map(group => group.split('~').filter(str => str));
 
-    console.log('allDisclosures --', allDisclosures)
+    // console.log('allDisclosures --', allDisclosures)
 
 
     for(let i=0; i<verified.payload.vp.verifiableCredential.length; i++){
         let vc = verified.payload.vp.verifiableCredential[i]
-        console.log('vc --', vc)
+        // console.log('vc --', vc)
         payload = decodeJWT(vc).payload
         let disclosures = allDisclosures[i]
         if (disclosures.length > 0) {
@@ -121,7 +121,7 @@ export async function verifyPresentationSDJWT(sdJwt: string, didResolver: Resolv
         }else{
             disclosedClaims.push({})
         }
-        console.log(disclosedClaims)
+        // console.log(disclosedClaims)
     }
 
 
