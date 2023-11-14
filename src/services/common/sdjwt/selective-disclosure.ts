@@ -96,20 +96,24 @@ export const parseDisclosure = (disclosure: string): string[] => {
     if (parsed.length != 3) {
         throw new Error("can't parse disclosure: " + disclosure);
     }
+    console.log('parsed disclosure -', parsed)
     return parsed;
 }
 
 export const discloseClaims = async (sdJwt: string, claims: string[]): Promise<string> => {
     // split SD-JWS into JWS and Disclosures
     const parts = sdJwt.split('~');
+    console.log('parts ', parts)
     const JWS = parts[0];
     if (parts.length <= 1) {
         return JWS
     }
     let disclosures = parts.slice(1);
+    console.log('disclosures ', disclosures)
     disclosures = disclosures.filter(disclosure => claims.includes(parseDisclosure(disclosure)[DisclosureArray.NAME]));
     // if(disclosures.length == 0) return JWS
     // re-encode the updated SD-JWT w/ Disclosures
+    console.log('new disclosures ', disclosures)
     const updatedSdJwt = JWS.concat("~" + disclosures.join("~"));
     return updatedSdJwt;
 }
